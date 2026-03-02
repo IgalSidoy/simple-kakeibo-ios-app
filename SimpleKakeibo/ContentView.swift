@@ -1,4 +1,7 @@
 import SwiftUI
+import os
+
+private let log = Logger(subsystem: "com.igals.SimpleKakeibo", category: "ContentView")
 
 struct ContentView: View {
     @State private var network = NetworkMonitor()
@@ -23,8 +26,10 @@ struct ContentView: View {
         }
         .animation(.easeInOut(duration: 0.3), value: network.isConnected)
         .task {
+            log.info("🟢 ContentView .task: starting cookie restore")
             await CookiePersistence.shared.restore()
             cookiesRestored = true
+            log.info("🟢 ContentView .task: cookies restored, showing WebView")
         }
     }
 }

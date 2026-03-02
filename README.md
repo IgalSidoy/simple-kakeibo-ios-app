@@ -1,30 +1,51 @@
-# TemplateApp
+# Simple Kakeibo — iOS App
 
-A simple SwiftUI iOS app starter project.
+Native iOS wrapper for the [Simple Kakeibo](https://app.ymym.io/) web app, built with SwiftUI and WKWebView.
+
+## Features
+
+- Full-screen WKWebView loading the hosted React web app
+- Cookie persistence across app restarts (works around iOS 17+ WKWebView bugs)
+- Automatic token refresh via httpOnly cookies
+- Pull-to-refresh
+- Haptic feedback on interactive elements
+- Offline detection with a friendly fallback screen
+- Shared `WKProcessPool` for consistent session handling
 
 ## Requirements
 
-- macOS with Xcode 16+ installed
+- macOS with Xcode 16+
 - iOS 17.0+ deployment target
+- [XcodeGen](https://github.com/yonaskolb/XcodeGen) for project generation
 
 ## Getting Started
 
-1. Open `TemplateApp.xcodeproj` in Xcode
-2. Select a simulator (e.g. iPhone 16)
-3. Press Cmd+R to build and run
+```bash
+brew install xcodegen   # one-time
+xcodegen generate
+open SimpleKakeibo.xcodeproj
+```
+
+Select a simulator or device, then press **Cmd+R** to build and run.
 
 ## Project Structure
 
-- `TemplateApp/TemplateAppApp.swift` — App entry point
-- `TemplateApp/ContentView.swift` — Main UI (Home tab with counter, Settings tab with form)
-- `TemplateApp/Assets.xcassets/` — Asset catalog (app icon, accent color)
-- `project.yml` — XcodeGen spec (regenerate with `xcodegen generate`)
+```
+SimpleKakeibo/
+├── SimpleKakeiboApp.swift   # App entry point, saves cookies on background
+├── ContentView.swift        # Root view, restores cookies before showing WebView
+├── WebView.swift            # WKWebView wrapper with navigation & cookie observer
+├── CookiePersistence.swift  # Saves/restores WKWebView cookies via UserDefaults
+├── NetworkMonitor.swift     # NWPathMonitor wrapper for connectivity status
+├── OfflineView.swift        # Displayed when the device is offline
+├── Assets.xcassets/         # App icon, accent color, launch background
+└── Info.plist
+```
 
 ## Regenerating the Xcode Project
 
-If you modify `project.yml` or add new files:
+After modifying `project.yml` or adding/removing files:
 
 ```bash
-brew install xcodegen  # one-time
 xcodegen generate
 ```

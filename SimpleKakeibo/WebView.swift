@@ -1,6 +1,9 @@
 import SwiftUI
 import WebKit
 import UIKit
+import os
+
+private let log = Logger(subsystem: "com.igals.SimpleKakeibo", category: "WebView")
 
 /// Loads a URL or inline HTML in a WKWebView with haptic feedback and pull-to-refresh.
 struct WebView: UIViewRepresentable {
@@ -49,8 +52,10 @@ struct WebView: UIViewRepresentable {
         context.coordinator.webView = webView
 
         if let url {
+            log.info("🌐 loading URL: \(url.absoluteString)")
             webView.load(URLRequest(url: url))
         } else if let html {
+            log.info("🌐 loading inline HTML")
             webView.loadHTMLString(html, baseURL: nil)
         }
 
@@ -110,11 +115,41 @@ struct WebView: UIViewRepresentable {
 
         // MARK: - WKNavigationDelegate
 
+        func webView(_ webView: WKWebView, didStartProvisionalNavigation navigation: WKNavigation!) {
+            log.info("🌐 didStartProvisionalNavigation: \(webView.url?.absoluteString ?? "nil")")
+        }
+
+        func webView(_ webView: WKWebView, didCommit navigation: WKNavigation!) {
+            log.info("🌐 didCommit: \(webView.url?.absoluteString ?? "nil")")
+        }
+
         func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) {
+            log.info("🌐 didFinish: \(webView.url?.absoluteString ?? "nil")")
             CookiePersistence.saveInBackground()
         }
 
+        func webView(_ webView: WKWebView, didFailProvisionalNavigation navigation: WKNavigation!, withError error: Error) {
+            log.error("🌐 didFailProvisionalNavigation: \(error.localizedDescription)")
+        }
+
+        func webView(_ webView: WKWebView, didFail navigation: WKNavigation!, withError error: Error) {
+            log.error("🌐 didFail: \(error.localizedDescription)")
+        }
+
+        func webView(_ webView: WKWebView,
+                      didReceive challenge: URLAuthenticationChallenge
+        ) async -> (URLSession.AuthChallengeDisposition, URLCredential?) {
+            #if DEBUG
+            if challenge.protectionSpace.authenticationMethod == NSURLAuthenticationMethodServerTrust,
+               let trust = challenge.protectionSpace.serverTrust {
+                return (.useCredential, URLCredential(trust: trust))
+            }
+            #endif
+            return (.performDefaultHandling, nil)
+        }
+
         func webViewWebContentProcessDidTerminate(_ webView: WKWebView) {
+            log.warning("🌐 webContentProcessDidTerminate — restoring cookies and reloading")
             Task { @MainActor in
                 await CookiePersistence.shared.restore()
             }
